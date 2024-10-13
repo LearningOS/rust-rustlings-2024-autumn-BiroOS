@@ -27,8 +27,6 @@ enum IntoColorError {
     IntConversion,
 }
 
-// I AM NOT DONE
-
 // Your task is to complete this implementation and return an Ok result of inner
 // type Color. You need to create an implementation for a tuple of three
 // integers, an array of three integers, and a slice of integers.
@@ -37,10 +35,23 @@ enum IntoColorError {
 // time, but the slice implementation needs to check the slice length! Also note
 // that correct RGB color values must be integers in the 0..=255 range.
 
+fn common_logic(rgb_vec: Vec<i16>) -> Result<Color, IntoColorError> {
+    let valid_range = 0..=255;
+    if rgb_vec.iter().any(|x| !valid_range.contains(x)) {
+        return Err(IntoColorError::IntConversion);
+    }
+    Ok(Color {
+        red: rgb_vec[0] as u8,
+        green: rgb_vec[1] as u8,
+        blue: rgb_vec[2] as u8,
+    })
+}
+
 // Tuple implementation
 impl TryFrom<(i16, i16, i16)> for Color {
     type Error = IntoColorError;
     fn try_from(tuple: (i16, i16, i16)) -> Result<Self, Self::Error> {
+        common_logic(vec![tuple.0, tuple.1, tuple.2])
     }
 }
 
@@ -48,6 +59,7 @@ impl TryFrom<(i16, i16, i16)> for Color {
 impl TryFrom<[i16; 3]> for Color {
     type Error = IntoColorError;
     fn try_from(arr: [i16; 3]) -> Result<Self, Self::Error> {
+        common_logic(vec![arr[0], arr[1], arr[2]])
     }
 }
 
@@ -55,6 +67,11 @@ impl TryFrom<[i16; 3]> for Color {
 impl TryFrom<&[i16]> for Color {
     type Error = IntoColorError;
     fn try_from(slice: &[i16]) -> Result<Self, Self::Error> {
+        let vec = slice.to_vec();
+        if vec.len() != 3 {
+            return Err(Self::Error::BadLen);
+        }
+        common_logic(slice.to_vec())
     }
 }
 
