@@ -2,7 +2,6 @@
     single linked list merge
     This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
@@ -20,19 +19,22 @@ impl<T> Node<T> {
     }
 }
 #[derive(Debug)]
-struct LinkedList<T> {
+struct LinkedList<T>
+where
+    T: Ord,
+{
     length: u32,
     start: Option<NonNull<Node<T>>>,
     end: Option<NonNull<Node<T>>>,
 }
 
-impl<T> Default for LinkedList<T> {
+impl<T: Ord> Default for LinkedList<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> LinkedList<T> {
+impl<T: Ord> LinkedList<T> {
     pub fn new() -> Self {
         Self {
             length: 0,
@@ -45,11 +47,15 @@ impl<T> LinkedList<T> {
         let mut node = Box::new(Node::new(obj));
         node.next = None;
         let node_ptr = Some(unsafe { NonNull::new_unchecked(Box::into_raw(node)) });
+        self.add_node(node_ptr);
+    }
+
+    fn add_node(&mut self, node: Option<NonNull<Node<T>>>) {
         match self.end {
-            None => self.start = node_ptr,
-            Some(end_ptr) => unsafe { (*end_ptr.as_ptr()).next = node_ptr },
+            None => self.start = node,
+            Some(end_ptr) => unsafe { (*end_ptr.as_ptr()).next = node },
         }
-        self.end = node_ptr;
+        self.end = node;
         self.length += 1;
     }
 
@@ -68,15 +74,39 @@ impl<T> LinkedList<T> {
     }
     pub fn merge(list_a: LinkedList<T>, list_b: LinkedList<T>) -> Self {
         //TODO
-        Self {
-            length: 0,
-            start: None,
-            end: None,
+        let mut res = Self::new();
+        let mut curr_a = list_a.start;
+        let mut curr_b = list_b.start;
+        while let (Some(node_a_ptr), Some(node_b_ptr)) = (curr_a, curr_b) {
+            unsafe {
+                let mut a = node_a_ptr.as_ptr();
+                let mut b = node_b_ptr.as_ptr();
+                if (*a).val < (*b).val {
+                    res.add_node(Some(node_a_ptr));
+                    curr_a = (*a).next;
+                } else {
+                    res.add_node(Some(node_b_ptr));
+                    curr_b = (*b).next;
+                }
+            }
+        }
+        Self::merge_the_remaining(&mut res, curr_a);
+        Self::merge_the_remaining(&mut res, curr_b);
+        res
+    }
+
+    fn merge_the_remaining(list: &mut LinkedList<T>, node: Option<NonNull<Node<T>>>) {
+        let mut node = node;
+        while let Some(node_ptr) = node {
+            list.add_node(Some(node_ptr));
+            unsafe {
+                node = (*node_ptr.as_ptr()).next;
+            }
         }
     }
 }
 
-impl<T> Display for LinkedList<T>
+impl<T: Ord> Display for LinkedList<T>
 where
     T: Display,
 {

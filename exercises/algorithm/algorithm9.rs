@@ -1,8 +1,7 @@
 /*
-	heap
-	This question requires you to implement a binary heap function
+    heap
+    This question requires you to implement a binary heap function
 */
-// I AM NOT DONE
 
 use std::cmp::Ord;
 use std::default::Default;
@@ -37,7 +36,35 @@ where
     }
 
     pub fn add(&mut self, value: T) {
-        //TODO
+        self.items.push(value);
+        self.count += 1;
+        self.heapify_up();
+    }
+
+    fn heapify_up(&mut self) {
+        let mut idx = self.count;
+        while idx != 1 {
+            let par = self.parent_idx(idx);
+            if (self.comparator)(&self.items[idx], &self.items[par]) {
+                self.items.swap(idx, par);
+                idx = par;
+            } else {
+                break;
+            }
+        }
+    }
+
+    fn heapify_down(&mut self) {
+        let mut idx = 1;
+        while self.children_present(idx) {
+            let min_child_idx = self.smallest_child_idx(idx);
+            if !(self.comparator)(&self.items[idx], &self.items[min_child_idx]) {
+                self.items.swap(idx, min_child_idx);
+                idx = min_child_idx;
+            } else {
+                break;
+            }
+        }
     }
 
     fn parent_idx(&self, idx: usize) -> usize {
@@ -57,8 +84,19 @@ where
     }
 
     fn smallest_child_idx(&self, idx: usize) -> usize {
-        //TODO
-		0
+        let left_child_idx = self.left_child_idx(idx);
+        if left_child_idx > self.count {
+            panic!("Should not reach here");
+        }
+        let right_child_idx = self.right_child_idx(idx);
+        if right_child_idx > self.count {
+            return left_child_idx;
+        }
+        if (self.comparator)(&self.items[left_child_idx], &self.items[right_child_idx]) {
+            left_child_idx
+        } else {
+            right_child_idx
+        }
     }
 }
 
@@ -84,8 +122,13 @@ where
     type Item = T;
 
     fn next(&mut self) -> Option<T> {
-        //TODO
-		None
+        if self.is_empty() {
+            return None;
+        }
+        self.items.swap(1, self.count);
+        self.count -= 1;
+        self.heapify_down();
+        Some(self.items.remove(self.count + 1))
     }
 }
 
